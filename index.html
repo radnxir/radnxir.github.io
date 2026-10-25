@@ -1,0 +1,587 @@
+<title>RadnBiologist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Concept: a lab notebook on graph paper. A dark microscope field opens the page, navigation is a gel run, projects are petri dishes. */
+:root{
+  --bg:#F2F6F3; --fg:#12201C; --muted:#4B5E58; --grid:#DCE6E0; --rule:#C3D2CA;
+  --dapi:#2540E0; --fitc:#0B7A40; --amber:#A85A00;
+  --agar:#E6F0E2; --chip:#E7EEEA;
+  --make-bg:#E3E8FF; --make-fg:#1B2FBF;
+  --meas-bg:#FFEBD2; --meas-fg:#8A4A00;
+  --bio-bg:#DDF3E5; --bio-fg:#0B6B38;
+  --code-bg:#E4E8E6; --code-fg:#33433E;
+  --panel:#0C1815; --panel-fg:#CFE3DA; --panel-num:#6CF0A0; --panel-dim:#7E968C;
+  --gel-band:#5B7FA8; --gel-well:#27413A;
+  --hero-bg:#050B09; --hero-fg:#EAF4EF; --hero-muted:#A9C2B8; --hero-green:#6CF0A0; --hero-blue:#93A5FF;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1310; --fg:#E4EFE9; --muted:#9DB2A9; --grid:#14211C; --rule:#243630;
+    --dapi:#7C93FF; --fitc:#5AE08C; --amber:#FFB257;
+    --agar:#12201A; --chip:#15231E;
+    --make-bg:#17205A; --make-fg:#AEBBFF;
+    --meas-bg:#4A2E0A; --meas-fg:#FFD29A;
+    --bio-bg:#0F3A23; --bio-fg:#8CF0B3;
+    --code-bg:#1B2823; --code-fg:#B6C7BF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1310; --fg:#E4EFE9; --muted:#9DB2A9; --grid:#14211C; --rule:#243630;
+  --dapi:#7C93FF; --fitc:#5AE08C; --amber:#FFB257;
+  --agar:#12201A; --chip:#15231E;
+  --make-bg:#17205A; --make-fg:#AEBBFF;
+  --meas-bg:#4A2E0A; --meas-fg:#FFD29A;
+  --bio-bg:#0F3A23; --bio-fg:#8CF0B3;
+  --code-bg:#1B2823; --code-fg:#B6C7BF;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+@media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth} }
+body{
+  margin:0; background-color:var(--bg); color:var(--fg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-family:var(--f-body); font-size:16px; line-height:1.6;
+}
+.wrap{width:min(1080px,calc(100% - 32px)); margin-inline:auto}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--dapi); outline-offset:3px}
+h1,h2,h3{font-family:var(--f-display); text-wrap:balance; margin:0; line-height:1.08}
+p{margin:0}
+ul,ol,dl,dd{margin:0; padding:0}
+
+/* ---------- hero ---------- */
+.hero{position:relative; overflow:hidden; background:var(--hero-bg); color:var(--hero-fg)}
+.hero :focus-visible{outline-color:var(--hero-blue)}
+#field{position:absolute; inset:0; width:100%; height:100%; display:block}
+.veil{position:absolute; inset:0; background:linear-gradient(90deg,rgba(5,11,9,.84),rgba(5,11,9,.4) 62%,rgba(5,11,9,.12))}
+.hero-in{position:relative; padding-block:22px 56px; display:flex; flex-direction:column; gap:18px}
+.hero-top{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.brand{font-family:var(--f-mono); font-size:13px; letter-spacing:.06em}
+.themebtn{font-family:var(--f-mono); font-size:12px; color:var(--hero-fg); background:transparent; border:1px solid rgba(234,244,239,.4); padding:6px 10px; border-radius:3px; cursor:pointer}
+.themebtn:hover{border-color:var(--hero-green); color:var(--hero-green)}
+.hero h1{display:flex; flex-direction:column; gap:12px; margin-top:clamp(36px,9vw,84px)}
+.hero .name{font-family:var(--f-mono); font-weight:400; font-size:clamp(14px,2.4vw,18px); letter-spacing:.08em; text-transform:uppercase; color:var(--hero-muted)}
+.hero .hook{display:flex; flex-direction:column; font-size:clamp(34px,7.4vw,78px); font-weight:700; letter-spacing:-.02em; line-height:1.02}
+.hook .l1{color:var(--hero-green)}
+.hook .l2{color:var(--hero-blue)}
+.topics{font-family:var(--f-mono); font-size:clamp(12px,2vw,15px); letter-spacing:.04em; color:var(--hero-fg)}
+.now{color:var(--hero-muted); max-width:56ch}
+.figcap{font-family:var(--f-mono); font-size:11px; color:var(--hero-muted); opacity:.8; margin-top:10px}
+
+/* ---------- gel-run nav ---------- */
+.lanes{position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:var(--bg); border-bottom:1px solid var(--rule)}
+.lanes ul{list-style:none; display:flex; gap:clamp(6px,2vw,18px); padding-block:10px 8px}
+.lane{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px; text-decoration:none; color:var(--muted)}
+.gel{position:relative; width:100%; max-width:72px; height:34px; border-radius:3px; background:var(--panel); overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.gel::before{content:""; position:absolute; top:0; left:20%; right:20%; height:5px; background:var(--gel-well); border-radius:0 0 2px 2px}
+.gel i{position:absolute; left:22%; right:22%; height:3px; border-radius:2px; background:var(--gel-band); opacity:.9; transition:transform .35s ease, background .2s, box-shadow .2s}
+.gel i:nth-child(1){top:var(--b1)}
+.gel i:nth-child(2){top:var(--b2); left:28%; right:28%}
+.gel i:nth-child(3){top:var(--b3); left:25%; right:25%}
+.lane:hover .gel i{transform:translateY(5px)}
+.lane[aria-current] .gel i{background:var(--panel-num); box-shadow:0 0 8px var(--panel-num)}
+.lane[aria-current]{color:var(--fg)}
+.lbl{font-family:var(--f-mono); font-size:clamp(9.5px,2.6vw,12px); letter-spacing:.02em}
+@media (prefers-reduced-motion: reduce){ .gel i{transition:none} .lane:hover .gel i{transform:none} }
+
+/* ---------- sections ---------- */
+section{padding-block:clamp(48px,8vw,88px); scroll-margin-top:84px}
+.kicker{font-family:var(--f-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--dapi); margin-bottom:10px}
+h2{font-size:clamp(28px,4.6vw,46px); font-weight:700; letter-spacing:-.015em; margin-bottom:28px}
+
+/* about */
+.about-grid{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:40px; align-items:start}
+.about-text p{max-width:62ch; font-size:18px}
+.about-text p + p{margin-top:16px}
+.readout{background:var(--panel); color:var(--panel-fg); padding:20px; border-radius:6px}
+.ro-head{font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--panel-dim); border-bottom:1px solid #1F332D; padding-bottom:10px; margin-bottom:16px}
+.readout dl{display:grid; grid-template-columns:1fr 1fr; gap:20px 16px}
+.readout dt{font-family:var(--f-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--panel-dim); line-height:1.35}
+.readout dd{font-family:var(--f-mono); font-size:clamp(30px,5vw,40px); font-weight:500; color:var(--panel-num); line-height:1.1; margin-top:6px; font-variant-numeric:tabular-nums}
+.readout dd small{font-size:.45em; color:var(--panel-dim); margin-left:2px}
+
+/* research entries */
+.entry{display:grid; grid-template-columns:168px minmax(0,1fr); gap:28px; padding-block:36px; border-top:1px solid var(--rule)}
+.entry:last-child{border-bottom:1px solid var(--rule)}
+.dish{width:168px; max-width:100%; aspect-ratio:1}
+.dish svg{width:100%; height:100%; display:block}
+.dish .rim{fill:var(--bg); stroke:var(--rule); stroke-width:3}
+.dish .agar{fill:var(--agar); stroke:var(--rule); stroke-width:1}
+.dish .inner{fill:none; stroke:var(--rule); stroke-width:1; opacity:.6}
+.dish .glare{fill:none; stroke:var(--bg); stroke-width:4; stroke-linecap:round; opacity:.7}
+.dish .col{transform-box:fill-box; transform-origin:center; transition:transform .6s ease}
+.c-blue .col{fill:var(--dapi); opacity:.85}
+.c-amber .col{fill:var(--amber); opacity:.85}
+.c-green .col{fill:var(--fitc); opacity:.85}
+.entry:hover .col{transform:scale(1.35)}
+@media (prefers-reduced-motion: reduce){ .dish .col{transition:none} .entry:hover .col{transform:none} }
+.tag{font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase}
+.entry h3{font-size:clamp(23px,3.4vw,32px); font-weight:650; letter-spacing:-.01em; margin:6px 0 6px}
+.where{font-family:var(--f-mono); font-size:13px; color:var(--muted); margin-bottom:14px}
+.q{font-size:18px; max-width:64ch; margin-bottom:14px}
+.did{list-style:none; display:flex; flex-direction:column; gap:8px; max-width:68ch; margin-bottom:16px}
+.did li{position:relative; padding-left:20px}
+.did li::before{content:""; position:absolute; left:2px; top:.7em; width:7px; height:7px; border-radius:50%; background:var(--dot,var(--dapi))}
+.c-blue-text{--dot:var(--dapi)} .c-amber-text{--dot:var(--amber)} .c-green-text{--dot:var(--fitc)}
+.chips{list-style:none; display:flex; flex-wrap:wrap; gap:6px}
+.chips li{font-family:var(--f-mono); font-size:12px; padding:3px 8px; border:1px solid var(--rule); border-radius:3px; background:var(--chip)}
+
+/* path */
+.path-wrap{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:32px; align-items:center}
+.nyq{width:100%; height:auto; display:block}
+.nyq .base{stroke:var(--rule); stroke-width:2}
+.nyq .arc{fill:none; stroke:var(--dapi); stroke-width:3; stroke-linecap:round}
+.nyq .dot{fill:var(--fitc); stroke:var(--bg); stroke-width:3; transition:r .2s}
+.nyq .dot.on{fill:var(--amber)}
+.nyq text{font-family:var(--f-mono); font-size:17px; fill:var(--muted)}
+.nyq text.on{fill:var(--fg); font-weight:500}
+.cap{font-family:var(--f-mono); font-size:12px; color:var(--muted); margin-top:12px; max-width:60ch}
+.steps{list-style:none; display:flex; flex-direction:column; gap:4px}
+.steps li{display:grid; grid-template-columns:56px minmax(0,1fr); gap:10px; padding:10px 10px; border-left:3px solid var(--rule)}
+.steps li:hover,.steps li:focus-visible,.steps li.on{border-left-color:var(--amber); background:var(--chip)}
+.steps b{font-family:var(--f-mono); font-weight:500; font-size:14px; color:var(--dapi)}
+
+/* methods */
+.legend{font-family:var(--f-mono); font-size:12px; color:var(--muted); margin:-12px 0 28px; max-width:64ch}
+.grp{margin-bottom:28px}
+.grp h3{font-family:var(--f-mono); font-size:12px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px; color:var(--muted)}
+.tiles{list-style:none; display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px}
+.tile{display:flex; flex-direction:column; gap:2px; padding:10px 10px 9px; border-radius:4px; min-width:0}
+.tile b{font-family:var(--f-display); font-size:23px; font-weight:700; line-height:1.1; overflow-wrap:anywhere}
+.tile span{font-size:12px; line-height:1.3}
+.g-make .tile{background:var(--make-bg); color:var(--make-fg)}
+.g-meas .tile{background:var(--meas-bg); color:var(--meas-fg)}
+.g-bio .tile{background:var(--bio-bg); color:var(--bio-fg)}
+.g-code .tile{background:var(--code-bg); color:var(--code-fg)}
+.also{font-family:var(--f-mono); font-size:13px; color:var(--muted); max-width:70ch; margin-top:8px}
+
+/* papers */
+.cites{list-style:none; display:flex; flex-direction:column}
+.cites li{display:grid; grid-template-columns:140px minmax(0,1fr); gap:16px; padding-block:18px; border-top:1px solid var(--rule)}
+.cites li:last-child{border-bottom:1px solid var(--rule)}
+.cites .meta{font-family:var(--f-mono); font-size:12px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase}
+.cites .meta b{display:block; font-size:16px; font-weight:500; color:var(--dapi); letter-spacing:0}
+.cites p{max-width:74ch}
+.alsolist{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:28px}
+.alsolist div{border:1px solid var(--rule); background:var(--chip); border-radius:4px; padding:14px 16px}
+.alsolist h3{font-family:var(--f-mono); font-size:12px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+
+/* contact */
+.mail{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:6px}
+.mail code{font-family:var(--f-mono); font-size:clamp(16px,3.2vw,22px); padding:8px 12px; background:var(--chip); border:1px solid var(--rule); border-radius:3px; overflow-wrap:anywhere}
+.copybtn{font-family:var(--f-mono); font-size:13px; padding:9px 14px; background:var(--fg); color:var(--bg); border:0; border-radius:3px; cursor:pointer}
+.copybtn:hover{background:var(--dapi); color:var(--bg)}
+.place{font-family:var(--f-mono); font-size:13px; color:var(--muted); margin-top:16px}
+footer{padding-block:28px 40px; border-top:1px solid var(--rule); font-family:var(--f-mono); font-size:12px; color:var(--muted)}
+
+@media (max-width:819px){
+  .about-grid,.path-wrap{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:719px){
+  .entry{grid-template-columns:minmax(0,1fr); gap:18px}
+  .dish{width:132px}
+  .cites li{grid-template-columns:minmax(0,1fr); gap:6px}
+  .cites .meta b{display:inline; margin-right:8px}
+}
+</style>
+
+<header class="hero">
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="veil"></div>
+  <div class="wrap hero-in">
+    <div class="hero-top">
+      <span class="brand">RadnBiologist</span>
+      <button id="theme" class="themebtn" type="button">Light / dark</button>
+    </div>
+    <h1>
+      <span class="name">Radhika S. Nair</span>
+      <span class="hook"><span class="l1">Radhika as a Biologist.</span><span class="l2">Radhika as an Engineer.</span></span>
+    </h1>
+    <p class="topics">Biomaterials · Biosensors · Biointerfaces · Living Materials</p>
+    <p class="now">MTech in Biological Sciences Engineering at IIT Gandhinagar. Expected 2027.</p>
+    <p class="figcap">Background drawn in code, inspired by confocal images of Caco-2 cells.</p>
+  </div>
+</header>
+
+<nav class="lanes" aria-label="Sections">
+  <div class="wrap">
+    <ul>
+      <li style="display:contents"><a class="lane" href="#about"><span class="gel" style="--b1:11px;--b2:19px;--b3:26px"><i></i><i></i><i></i></span><span class="lbl">About</span></a></li>
+      <li style="display:contents"><a class="lane" href="#research"><span class="gel" style="--b1:13px;--b2:21px;--b3:27px"><i></i><i></i><i></i></span><span class="lbl">Research</span></a></li>
+      <li style="display:contents"><a class="lane" href="#path"><span class="gel" style="--b1:10px;--b2:16px;--b3:25px"><i></i><i></i><i></i></span><span class="lbl">Path</span></a></li>
+      <li style="display:contents"><a class="lane" href="#methods"><span class="gel" style="--b1:15px;--b2:22px;--b3:28px"><i></i><i></i><i></i></span><span class="lbl">Methods</span></a></li>
+      <li style="display:contents"><a class="lane" href="#papers"><span class="gel" style="--b1:12px;--b2:18px;--b3:24px"><i></i><i></i><i></i></span><span class="lbl">Papers</span></a></li>
+      <li style="display:contents"><a class="lane" href="#contact"><span class="gel" style="--b1:14px;--b2:20px;--b3:29px"><i></i><i></i><i></i></span><span class="lbl">Contact</span></a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section id="about">
+    <div class="wrap">
+      <p class="kicker">About</p>
+      <h2>Surfaces, sensors, and the cells that meet them</h2>
+      <div class="about-grid">
+        <div class="about-text">
+          <p>I'm an MTech researcher at IIT Gandhinagar, working where biosensing meets engineered biomaterials. I design surfaces that capture and detect bacteria, build the chambers to test them, and read the results electrochemically.</p>
+          <p>Before that, I worked on enzyme-nanomaterial systems for environmental clean-up. I'm now looking for a PhD where I can bring this toolkit to living systems and engineered living materials.</p>
+        </div>
+        <aside class="readout" aria-label="At a glance">
+          <p class="ro-head">Readout</p>
+          <dl>
+            <div><dt>Peer-reviewed publications</dt><dd>3</dd></div>
+            <div><dt>Patent filed</dt><dd>1</dd></div>
+            <div><dt>Junior researchers supervised</dt><dd>~25</dd></div>
+            <div><dt>MTech CGPA to date</dt><dd>9.0<small>/10</small></dd></div>
+          </dl>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="research">
+    <div class="wrap">
+      <p class="kicker">Research</p>
+      <h2>Three benches</h2>
+
+      <article class="entry">
+        <div class="dish c-blue" aria-hidden="true" data-seed="11" data-n="30"></div>
+        <div>
+          <p class="tag">MTech thesis · 2024 – present</p>
+          <h3>Catching airborne bacteria on engineered surfaces</h3>
+          <p class="where">SMART Lab, IIT Gandhinagar · PI: Dr. Soumyadip Sett</p>
+          <p class="q">How does the wettability of a surface change the way bacteria stick to it, and can that be used to capture airborne microbes for real-time monitoring?</p>
+          <ul class="did c-blue-text">
+            <li>Designed and built a microbiome simulation chamber that recreates atmospheric conditions, so capture can be tested in a controlled way. A joint patent was filed for it in 2025.</li>
+            <li>Developed substrates with nanostructures and molecularly imprinted polymers for selective bacterial capture and detection.</li>
+            <li>Developing electrochemical impedance spectroscopy as a real-time readout inside an integrated microfluidic platform. This part is in progress.</li>
+            <li>Supervised five undergraduate interns across two summer programmes.</li>
+          </ul>
+          <ul class="chips"><li>wettability</li><li>molecularly imprinted polymers</li><li>nanostructures</li><li>impedance spectroscopy</li><li>microfluidics</li><li>bacterial culture</li></ul>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="dish c-amber" aria-hidden="true" data-seed="23" data-n="26"></div>
+        <div>
+          <p class="tag">Project Fellow · 2021 – 2024</p>
+          <h3>Enzymes on nanomaterials for environmental clean-up</h3>
+          <p class="where">Biochemistry Lab, IIT Gandhinagar · PI: Dr. Bhaskar Datta</p>
+          <p class="q">Can enzymes and catalytic nanomaterials work together on pollutants and waste streams?</p>
+          <ul class="did c-amber-text">
+            <li>Synthesised and characterised nanoparticles, microspheres and hydrogels.</li>
+            <li>Built a urease-immobilised iron-oxide nanoconstruct to extract ammonia from urine, for circular remediation.</li>
+            <li>Studied laccase-mediator systems on phenolic and non-phenolic substrates.</li>
+            <li>Made copper oxide microspheres for catalytic dye degradation. This work was published in 2026.</li>
+            <li>Tested the antioxidant behaviour of <em>Opuntia ficus-indica</em> extracts using mammalian cell culture and analytical chemistry.</li>
+            <li>Supervised about 20 summer interns and MTech thesis students over two and a half years.</li>
+          </ul>
+          <ul class="chips"><li>nanoparticles</li><li>hydrogels</li><li>enzyme immobilisation</li><li>mammalian cell culture</li><li>analytical chemistry</li></ul>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="dish c-green" aria-hidden="true" data-seed="37" data-n="22"></div>
+        <div>
+          <p class="tag">Undergraduate and internships · 2020 – 2024</p>
+          <h3>First steps at the bench</h3>
+          <p class="where">SRMIST · Regional Centre for Biotechnology · Azyme Biosciences · Avigen Biotech</p>
+          <ul class="did c-green-text">
+            <li>Drug release kinetics from GO/PVA/SA nanocomposites, with Dr. K. Venkatesan at SRMIST.</li>
+            <li>A review of antimicrobial peptides, with Dr. Priya Swaminathan at SRMIST.</li>
+            <li>Basic recombinant DNA technology at Azyme Biosciences, Bangalore.</li>
+            <li>Chitosan nanoparticle synthesis at Avigen Biotech, Chennai.</li>
+            <li>Short-term internship at the Regional Centre for Biotechnology, Faridabad (2024), with Dr. Deepti Jain. Cultured <em>Pseudomonas aeruginosa</em>, then ran genetic transformation, PCR amplification and agarose gel electrophoresis on a target gene.</li>
+          </ul>
+          <ul class="chips"><li>nanocomposites</li><li>chitosan nanoparticles</li><li>recombinant DNA</li><li>PCR</li><li>gel electrophoresis</li></ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="path">
+    <div class="wrap">
+      <p class="kicker">Path</p>
+      <h2>A Nyquist plot of the last few years</h2>
+      <div class="path-wrap">
+        <div>
+          <svg class="nyq" id="nyq" viewBox="0 0 600 300" role="img" aria-label="Impedance-style arc with six points from 2020 to 2027, listed beside it">
+            <line class="base" x1="40" y1="270" x2="560" y2="270"/>
+            <path class="arc" d="M 90 270 A 210 210 0 0 1 510 270"/>
+          </svg>
+          <p class="cap">Impedance spectroscopy plots a sweep from high frequency to low as an arc. Here the sweep runs through years instead.</p>
+        </div>
+        <ol class="steps" id="steps">
+          <li tabindex="0" data-year="2020"><b>2020</b><span>BTech in Biotechnology Engineering begins at SRMIST.</span></li>
+          <li tabindex="0" data-year="2021"><b>2021</b><span>Project Fellow in the Datta lab at IIT Gandhinagar.</span></li>
+          <li tabindex="0" data-year="2024"><b>2024</b><span>BTech completed with First Class with Distinction. Internship at the Regional Centre for Biotechnology. MTech begins at IIT Gandhinagar, in the SMART Lab.</span></li>
+          <li tabindex="0" data-year="2025"><b>2025</b><span>Joint patent filed. Book chapter published. Best Poster at the Frontiers of Engineering in Healthcare conference.</span></li>
+          <li tabindex="0" data-year="2026"><b>2026</b><span>Journal paper published in ACS Applied Engineering Materials.</span></li>
+          <li tabindex="0" data-year="2027"><b>2027</b><span>MTech expected.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="methods">
+    <div class="wrap">
+      <p class="kicker">Methods</p>
+      <h2>The toolkit, grouped by what it does</h2>
+      <p class="legend">Abbreviations are my own shorthand where there is no standard one.</p>
+
+      <div class="grp g-make">
+        <h3>Make</h3>
+        <ul class="tiles">
+          <li class="tile"><b>MIP</b><span>Molecularly imprinted polymers</span></li>
+          <li class="tile"><b>NP</b><span>Nanoparticles</span></li>
+          <li class="tile"><b>MS</b><span>Microspheres</span></li>
+          <li class="tile"><b>HG</b><span>Hydrogels</span></li>
+          <li class="tile"><b>EI</b><span>Enzyme immobilisation</span></li>
+        </ul>
+      </div>
+
+      <div class="grp g-meas">
+        <h3>Measure and sense</h3>
+        <ul class="tiles">
+          <li class="tile"><b>EIS</b><span>Electrochemical impedance spectroscopy</span></li>
+          <li class="tile"><b>EC</b><span>Basic electrochemistry</span></li>
+          <li class="tile"><b>FTIR</b><span>Infrared spectroscopy</span></li>
+          <li class="tile"><b>XRD</b><span>X-ray diffraction</span></li>
+          <li class="tile"><b>XPS</b><span>X-ray photoelectron spectroscopy</span></li>
+          <li class="tile"><b>SEM</b><span>Scanning electron microscopy</span></li>
+          <li class="tile"><b>TEM</b><span>Transmission electron microscopy</span></li>
+          <li class="tile"><b>AFM</b><span>Bio-AFM</span></li>
+          <li class="tile"><b>CA</b><span>Contact angle</span></li>
+          <li class="tile"><b>PF</b><span>Profilometry</span></li>
+          <li class="tile"><b>UV</b><span>UV-Vis spectrophotometry</span></li>
+          <li class="tile"><b>ITC</b><span>Isothermal titration calorimetry</span></li>
+          <li class="tile"><b>HPLC</b><span>Liquid chromatography</span></li>
+          <li class="tile"><b>LC-MS</b><span>Liquid chromatography with mass spec</span></li>
+        </ul>
+      </div>
+
+      <div class="grp g-bio">
+        <h3>Biology</h3>
+        <ul class="tiles">
+          <li class="tile"><b>BC</b><span>Bacterial culture (<em>E. coli</em>, <em>P. aeruginosa</em>)</span></li>
+          <li class="tile"><b>MC</b><span>Mammalian culture (HeLa, Caco-2)</span></li>
+          <li class="tile"><b>TF</b><span>Genetic transformation</span></li>
+          <li class="tile"><b>PCR</b><span>PCR amplification</span></li>
+          <li class="tile"><b>GE</b><span>Agarose gel electrophoresis</span></li>
+          <li class="tile"><b>DNA</b><span>DNA isolation</span></li>
+          <li class="tile"><b>CF</b><span>Confocal microscopy</span></li>
+          <li class="tile"><b>FC</b><span>Flow cytometry</span></li>
+        </ul>
+      </div>
+
+      <div class="grp g-code">
+        <h3>Code (basic)</h3>
+        <ul class="tiles">
+          <li class="tile"><b>Py</b><span>Python</span></li>
+          <li class="tile"><b>ML</b><span>MATLAB</span></li>
+          <li class="tile"><b>C++</b><span>C++</span></li>
+        </ul>
+      </div>
+
+      <p class="also">Also: Bioinformatic Methods (University of Toronto, Coursera) · Vaccine Technology (IISc Pravega) · French A2</p>
+    </div>
+  </section>
+
+  <section id="papers">
+    <div class="wrap">
+      <p class="kicker">Papers</p>
+      <h2>Papers, a patent, a poster</h2>
+      <ul class="cites">
+        <li>
+          <div class="meta"><b>2026</b>Journal article</div>
+          <p>Patel, H., Shukla, A. K., <strong>Nair, R.</strong>, &amp; Datta, B. (2026). Free-Standing Porous Cuprous Oxide Microspheres Exert Distinctive Catalytic Degradation of Nitroarenes and Dyes. <em>ACS Applied Engineering Materials</em>.</p>
+        </li>
+        <li>
+          <div class="meta"><b>2025</b>Book chapter</div>
+          <p>Patel, H., Patel, A., <strong>Nair, R.</strong>, &amp; Datta, B. (2025). Synergism in Enzyme-Nanomaterial Constructs for Select Applications in Environment and Food. In <em>Enzyme Immobilization with Nanomaterials: Applications and Challenges</em> (pp. 301–320). American Chemical Society.</p>
+        </li>
+        <li>
+          <div class="meta"><b>2024</b>Review article</div>
+          <p>Kotteeswaran, V., Saravanakumar, M., Alexander, R. M., <strong>Nair, R. S.</strong>, &amp; Ramnath, K. M. (2024). Advancement of nanofibers in wound healing: A review. <em>Biomedical and Pharmacology Journal</em>, 17(3), 1407–1431.</p>
+        </li>
+        <li>
+          <div class="meta"><b>2024</b>Book chapter</div>
+          <p><strong>Nair, R. S.</strong>, &amp; Swaminathan, P. (2024). Convergence of Artificial Intelligence and Biotechnology. In <em>Futuristic Trends in Biotechnology</em> (Vol. 3, Book 22, pp. 246–258). IIP Series.</p>
+        </li>
+      </ul>
+      <div class="alsolist">
+        <div><h3>Patent</h3><p>Joint patent filed in 2025 for the preliminary design prototype of a Microbiome Monitoring Simulation Chamber.</p></div>
+        <div><h3>Award</h3><p>Best Poster, Frontiers of Engineering in Healthcare (FEH) Conference, 2025.</p></div>
+        <div><h3>In preparation</h3><p>Three manuscripts, including a parametric study of condensation-assisted capture of airborne bacteria.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <p class="kicker">Contact</p>
+      <h2>Get in touch</h2>
+      <p>Email is the best way to reach me.</p>
+      <div class="mail">
+        <code id="addr">radhika.nair@iitgn.ac.in</code>
+        <button id="copy" class="copybtn" type="button">Copy</button>
+      </div>
+      <p class="place">Gandhinagar, India</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">RadnBiologist · Incubated at 37 °C, 180 rpm, overnight.</div>
+</footer>
+
+<script>
+/* ---- theme toggle ---- */
+(function(){
+  var btn=document.getElementById('theme'), root=document.documentElement;
+  if(!btn) return;
+  function eff(){
+    var t=root.getAttribute('data-theme'); if(t) return t;
+    return (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  try{ var s=localStorage.getItem('rb-theme'); if(s==='dark'||s==='light') root.setAttribute('data-theme',s); }catch(e){}
+  btn.addEventListener('click',function(){
+    var n=eff()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',n);
+    try{ localStorage.setItem('rb-theme',n); }catch(e){}
+  });
+})();
+
+/* ---- microscope field in the hero ---- */
+(function(){
+  var c=document.getElementById('field'); if(!c||!c.getContext) return;
+  var x=c.getContext('2d');
+  var reduce=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W=0,H=0,cells=[],grain=null,raf=0,running=false;
+  function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function blob(cx,cy,r,rgb,a){
+    var g=x.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,'rgba('+rgb+','+a+')');
+    g.addColorStop(.7,'rgba('+rgb+','+(a*0.55)+')');
+    g.addColorStop(1,'rgba('+rgb+',0)');
+    x.fillStyle=g; x.beginPath(); x.arc(cx,cy,r,0,6.2832); x.fill();
+  }
+  function build(){
+    var r=c.getBoundingClientRect(); if(!r.width||!r.height) return;
+    W=r.width; H=r.height;
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    c.width=Math.round(W*dpr); c.height=Math.round(H*dpr);
+    x.setTransform(dpr,0,0,dpr,0,0);
+    var rand=rng(7), n=W<640?5:9, base=Math.min(Math.max(W,500),900)*0.085;
+    cells=[];
+    for(var i=0;i<n;i++){ cells.push({x:rand()*W,y:rand()*H,r:base*(0.7+rand()*0.8),p:rand()*6.28,s:0.15+rand()*0.2}); }
+    grain=document.createElement('canvas'); grain.width=Math.round(W); grain.height=Math.round(H);
+    var g=grain.getContext('2d');
+    for(var k=0;k<W*H/260;k++){ g.fillStyle='rgba(120,255,180,'+(rand()*0.16)+')'; g.fillRect(rand()*W,rand()*H,1.4,1.4); }
+    draw(0);
+  }
+  function draw(t){
+    if(!W) return;
+    x.globalCompositeOperation='source-over'; x.fillStyle='#050B09'; x.fillRect(0,0,W,H);
+    x.globalCompositeOperation='lighter';
+    for(var i=0;i<cells.length;i++){
+      var q=cells[i], cx=q.x+Math.sin(t*q.s+q.p)*10, cy=q.y+Math.cos(t*q.s*0.8+q.p)*7;
+      blob(cx,cy,q.r*2.3,'60,200,120',0.17);
+      blob(cx,cy,q.r,'70,100,255',0.55);
+      blob(cx+q.r*0.25,cy-q.r*0.15,q.r*0.7,'90,120,255',0.4);
+      blob(cx-q.r*0.3,cy+q.r*0.2,q.r*0.6,'80,110,255',0.35);
+    }
+    x.globalCompositeOperation='source-over';
+    if(grain) x.drawImage(grain,0,0,W,H);
+  }
+  function loop(ts){ if(!running) return; draw(ts/1000); raf=requestAnimationFrame(loop); }
+  function start(){ if(reduce||running) return; running=true; raf=requestAnimationFrame(loop); }
+  function stop(){ running=false; if(raf) cancelAnimationFrame(raf); }
+  build();
+  var tm; window.addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(build,150); });
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){ es[0].isIntersecting?start():stop(); }).observe(c);
+  } else { start(); }
+})();
+
+/* ---- gel-run nav: mark the lane for the section in view ---- */
+(function(){
+  var lanes=[].slice.call(document.querySelectorAll('.lane'));
+  if(!lanes.length||!('IntersectionObserver' in window)) return;
+  var map={};
+  lanes.forEach(function(a){ map[a.getAttribute('href').slice(1)]=a; });
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        lanes.forEach(function(a){ a.removeAttribute('aria-current'); });
+        var a=map[e.target.id]; if(a) a.setAttribute('aria-current','true');
+      }
+    });
+  },{rootMargin:'-40% 0px -55% 0px'});
+  Object.keys(map).forEach(function(id){ var s=document.getElementById(id); if(s) io.observe(s); });
+})();
+
+/* ---- petri dishes ---- */
+(function(){
+  function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  [].forEach.call(document.querySelectorAll('.dish'),function(el){
+    var rand=rng(+el.getAttribute('data-seed')||1), n=+el.getAttribute('data-n')||24;
+    var s='<svg viewBox="0 0 200 200" focusable="false"><circle class="rim" cx="100" cy="100" r="94"/><circle class="agar" cx="100" cy="100" r="86"/><circle class="inner" cx="100" cy="100" r="74"/>';
+    for(var i=0;i<n;i++){
+      var a=rand()*6.2832, d=Math.sqrt(rand())*64, r=2+rand()*rand()*9;
+      s+='<circle class="col" cx="'+(100+Math.cos(a)*d).toFixed(1)+'" cy="'+(100+Math.sin(a)*d).toFixed(1)+'" r="'+r.toFixed(1)+'"/>';
+    }
+    s+='<path class="glare" d="M 44 72 A 64 64 0 0 1 88 40"/></svg>';
+    el.innerHTML=s;
+  });
+})();
+
+/* ---- Nyquist path ---- */
+(function(){
+  var svg=document.getElementById('nyq'), list=document.getElementById('steps');
+  if(!svg||!list) return;
+  var ns='http://www.w3.org/2000/svg', items=[].slice.call(list.children), n=items.length;
+  var cx=300, cy=270, R=210, from=172, to=8, dots=[], labels=[];
+  items.forEach(function(li,i){
+    var th=(from-(from-to)*i/(n-1))*Math.PI/180;
+    var px=cx+R*Math.cos(th), py=cy-R*Math.sin(th);
+    var d=document.createElementNS(ns,'circle');
+    d.setAttribute('class','dot'); d.setAttribute('cx',px.toFixed(1)); d.setAttribute('cy',py.toFixed(1)); d.setAttribute('r','9');
+    svg.appendChild(d); dots.push(d);
+    var lx=cx+(R+26)*Math.cos(th), ly=cy-(R+26)*Math.sin(th), co=Math.cos(th);
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',lx.toFixed(1)); t.setAttribute('y',(ly+5).toFixed(1));
+    t.setAttribute('text-anchor', co>0.25?'start':(co<-0.25?'end':'middle'));
+    t.textContent=li.getAttribute('data-year');
+    svg.appendChild(t); labels.push(t);
+    function on(){ dots.forEach(function(o,k){ o.setAttribute('r',k===i?'13':'9'); o.classList.toggle('on',k===i); labels[k].classList.toggle('on',k===i); items[k].classList.toggle('on',k===i); }); }
+    function off(){ dots.forEach(function(o,k){ o.setAttribute('r','9'); o.classList.remove('on'); labels[k].classList.remove('on'); items[k].classList.remove('on'); }); }
+    li.addEventListener('mouseenter',on); li.addEventListener('focus',on);
+    li.addEventListener('mouseleave',off); li.addEventListener('blur',off);
+  });
+})();
+
+/* ---- copy email ---- */
+(function(){
+  var btn=document.getElementById('copy'), addr=document.getElementById('addr');
+  if(!btn||!addr) return;
+  function select(){
+    try{ var r=document.createRange(); r.selectNodeContents(addr); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
+    btn.textContent='Selected'; setTimeout(function(){ btn.textContent='Copy'; },1800);
+  }
+  btn.addEventListener('click',function(){
+    var t=addr.textContent;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ btn.textContent='Copied'; setTimeout(function(){ btn.textContent='Copy'; },1800); }).catch(select);
+    } else { select(); }
+  });
+})();
+</script>
